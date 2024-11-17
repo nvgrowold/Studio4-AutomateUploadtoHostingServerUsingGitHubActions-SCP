@@ -1,0 +1,28 @@
+# Specify the version of Docker Compose syntax
+version: '3.8'
+
+services:
+  # Define a service named 'react-app'
+  react-app:
+    # Specify build configuration for this service
+    build:
+      # Set the build context to the current directory (.)
+      context: .
+      # Use the Dockerfile in the current directory to build the image
+      dockerfile: Dockerfile
+    
+    # Map the container's port 3000 to the host's port 3000
+    ports:
+      - "3000:3000"
+
+    # Define volumes to enable live-reloading during development
+    volumes:
+      # Mount the current directory (project files) to /app in the container
+      - .:/app
+      # Prevents mounting of node_modules from the host, allowing it to use container-installed node_modules
+      - /app/node_modules
+
+    # Set environment variables
+    environment:
+      # Enable polling in Chokidar (a file-watching library) to allow live reloading in certain environments
+      - CHOKIDAR_USEPOLLING=true
