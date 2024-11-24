@@ -26,24 +26,31 @@ jobs:
     # Step 3: Install dependencies and build the React app
     - name: Install dependencies and build
       run: |
+        export NODE_OPTIONS=--openssl-legacy-provider
         npm install
         npm run build
 
-    # Step 4: Build the Docker image
+    # Step 4: Install Docker
+    - name: Install Docker
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker.io
+
+    # Step 5: Build the Docker image
     - name: Build Docker image
       run: |
         docker build -t react-app .
 
-    # Step 5: Save Docker image as a tarball
+    # Step 6: Save Docker image as a tarball
     - name: Save Docker image
       run: |
         docker save react-app > react-app.tar
 
-    # Step 6: Install sshpass
+    # Step 7: Install sshpass
     - name: Install sshpass
       run: sudo apt-get update && sudo apt-get install -y sshpass
 
-    # Step 7: Upload Docker image to hosting server
+    # Step 8: Upload Docker image to hosting server
     - name: Upload Docker image to hosting server
       env:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
@@ -52,7 +59,7 @@ jobs:
       run: |
         sshpass -p "$REMOTE_PASSWORD" scp react-app.tar $REMOTE_USER@$REMOTE_HOST:/home/$REMOTE_USER/react-app.tar
 
-    # Step 8: Deploy Docker container on hosting server
+    # Step 9: Deploy Docker container on hosting server
     - name: Deploy Docker container
       env:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
