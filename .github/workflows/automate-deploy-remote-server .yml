@@ -1,0 +1,67 @@
+name: Deploy React App to Hosting Server
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Check out the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Node.js for building the React app
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16' # Use the version compatible with your project
+
+    # Step 3: Install dependencies and build the React app
+    - name: Install dependencies and build
+      run: |
+        npm install
+        npm run build
+
+    # Step 4: Build the Docker image
+    - name: Build Docker image
+      run: |
+        docker build -t react-app .
+
+    # Step 5: Save Docker image as a tarball
+    - name: Save Docker image
+      run: |
+        docker save react-app > react-app.tar
+
+    # Step 6: Install sshpass
+    - name: Install sshpass
+      run: sudo apt-get update && sudo apt-get install -y sshpass
+
+    # Step 7: Upload Docker image to hosting server
+    - name: Upload Docker image to hosting server
+      env:
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+      run: |
+        sshpass -p "$REMOTE_PASSWORD" scp react-app.tar $REMOTE_USER@$REMOTE_HOST:/home/$REMOTE_USER/react-app.tar
+
+    # Step 8: Deploy Docker container on hosting server
+    - name: Deploy Docker container
+      env:
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+      run: |
+        sshpass -p "$REMOTE_PASSWORD" ssh $REMOTE_USER@$REMOTE_HOST << EOF
+        docker load < /home/$REMOTE_USER/react-app.tar
+        docker stop react-app || true
+        docker rm react-app || true
+        docker run -d --name react-app -p 80:80 react-app
+        EOF
