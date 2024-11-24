@@ -80,12 +80,13 @@ jobs:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+        PORT: ${{ secrets.APP_PORT }}
       run: |
         sshpass -p "$REMOTE_PASSWORD" ssh $REMOTE_USER@$REMOTE_HOST << EOF
         docker load < /home/$REMOTE_USER/react-app.tar
         docker stop react-app || true
         docker rm react-app || true
-        docker run -d --name react-app -p 80:80 react-app
+        docker run -d --name react-app -p $PORT:80 react-app
         rm /home/$REMOTE_USER/react-app.tar
         docker image prune -f
         EOF
