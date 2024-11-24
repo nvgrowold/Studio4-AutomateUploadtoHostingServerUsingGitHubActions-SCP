@@ -19,9 +19,19 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18' # Use LTS version
+        node-version: '18'
+
+    - name: Cache Node.js modules
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
 
     - name: Install dependencies and build
+      env:
+        NODE_OPTIONS: --openssl-legacy-provider
       run: |
         npm install
         npm run build
@@ -52,10 +62,21 @@ jobs:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+        PORT: ${{ secrets.APP_PORT }}
       run: |
         sshpass -p "$REMOTE_PASSWORD" ssh $REMOTE_USER@$REMOTE_HOST << EOF
         docker load < /home/$REMOTE_USER/react-app.tar
         docker stop react-app || true
         docker rm react-app || true
-        docker run -d --name react-app -p 80:80 react-app
+        docker run -d --name react-app -p $PORT:80 react-app
+        rm /home/$REMOTE_USER/react-app.tar
+        docker image prune -f
         EOF
+
+    - name: Verify deployment
+      env:
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
+      run: |
+        sshpass -p "$REMOTE_PASSWORD" ssh $REMOTE_USER@$REMOTE_HOST "docker ps | grep react-app"
