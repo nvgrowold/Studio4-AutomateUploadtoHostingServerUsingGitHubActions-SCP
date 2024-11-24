@@ -13,53 +13,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Check out the repository
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Step 2: Set up Node.js for building the React app
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '16' # Use the version compatible with your project
+        node-version: '18' # Use LTS version
 
-    # Step 3: Install dependencies and build the React app
     - name: Install dependencies and build
       run: |
-        export NODE_OPTIONS=--openssl-legacy-provider
         npm install
         npm run build
 
-    # Step 4: Install Docker
     - name: Install Docker
       run: |
         sudo apt-get update
         sudo apt-get install -y docker.io
 
-    # Step 5: Build the Docker image
     - name: Build Docker image
-      run: |
-        docker build -t react-app .
+      run: docker build -t react-app .
 
-    # Step 6: Save Docker image as a tarball
     - name: Save Docker image
-      run: |
-        docker save react-app > react-app.tar
+      run: docker save react-app > react-app.tar
 
-    # Step 7: Install sshpass
     - name: Install sshpass
       run: sudo apt-get update && sudo apt-get install -y sshpass
 
-    # Step 8: Upload Docker image to hosting server
     - name: Upload Docker image to hosting server
       env:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         REMOTE_PASSWORD: ${{ secrets.REMOTE_PASSWORD }}
-      run: |
-        sshpass -p "$REMOTE_PASSWORD" scp react-app.tar $REMOTE_USER@$REMOTE_HOST:/home/$REMOTE_USER/react-app.tar
+      run: sshpass -p "$REMOTE_PASSWORD" scp react-app.tar $REMOTE_USER@$REMOTE_HOST:/home/$REMOTE_USER/react-app.tar
 
-    # Step 9: Deploy Docker container on hosting server
     - name: Deploy Docker container
       env:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
