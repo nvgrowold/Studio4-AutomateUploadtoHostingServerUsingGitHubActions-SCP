@@ -21,7 +21,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18' # Use LTS version
+        node-version: '18'
 
     # Step 3: Cache Node.js modules to speed up builds
     - name: Cache Node.js modules
@@ -66,11 +66,13 @@ jobs:
     - name: Install sshpass
       run: sudo apt-get update && sudo apt-get install -y sshpass
 
-    # Step 10: Add remote host to known_hosts
+    # Step 10: Create .ssh directory and add remote host to known_hosts
     - name: Add remote host to known_hosts
       env:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-      run: ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H $REMOTE_HOST >> ~/.ssh/known_hosts
 
     # Step 11: Upload Docker image to hosting server
     - name: Upload Docker image to hosting server
