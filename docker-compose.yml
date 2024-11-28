@@ -13,7 +13,7 @@ services:
     
     # Map the container's port 3000 to the host's port 3000
     ports:
-      - "3000:3000"
+      - "3000:80" # Map port 80 in the container to port 3000 on the host
 
     # Define volumes to enable live-reloading during development
     volumes:
